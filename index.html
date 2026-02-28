@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Stellar Rhythm Tracker</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星とからだのリズム帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0f1a;
+    --deep: #12152b;
+    --panel: #1a1f38;
+    --glow: #c8d8ff;
+    --moon: #f0e8cc;
+    --accent: #6b8cda;
+    --pressure-high: #7ec8a4;
+    --pressure-low: #e08090;
+    --muted: #8892b0;
+    --border: rgba(108, 140, 218, 0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--ink);
+    color: var(--glow);
+    font-family: 'Shippori Mincho', serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(80,100,200,0.18) 0%, transparent 70%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  .widget {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px;
+  }
+
+  .title {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .today-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex;
+    gap: 4px;
+    background: var(--deep);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 6px;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 12px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .toggle-btn.active {
+    background: var(--panel);
+    color: var(--glow);
+    box-shadow: 0 1px 8px rgba(100,130,220,0.2);
+  }
+
+  /* Moon card */
+  .moon-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .moon-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(108,140,218,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Daily Moon View */
+  .daily-moon {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .moon-svg-wrap {
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 18px rgba(240,232,204,0.35));
+  }
+
+  .moon-info {
+    flex: 1;
+  }
+
+  .moon-name-jp {
+    font-size: 22px;
+    color: var(--moon);
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+
+  .moon-name-en {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .moon-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .moon-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .moon-stat .val {
+    font-family: 'DM Mono', monospace;
+    color: var(--glow);
+    font-size: 13px;
+  }
+
+  .illum-bar {
+    width: 80px;
+    height: 4px;
+    background: rgba(200,216,255,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .illum-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--moon));
+    border-radius: 2px;
+    transition: width 0.8s ease;
+  }
+
+  /* Weekly Moon View */
+  .weekly-moon {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .week-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 2px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .week-day.today {
+    background: rgba(108,140,218,0.12);
+    border-color: var(--border);
+  }
+
+  .week-day-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .week-day.today .week-day-label {
+    color: var(--accent);
+  }
+
+  .week-day-date {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--glow);
+  }
+
+  .week-moon-name {
+    font-size: 8px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .week-day.today .week-moon-name { color: var(--moon); }
+
+  /* Pressure card */
+  .pressure-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .pressure-main {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .pressure-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 40px;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--glow);
+  }
+
+  .pressure-unit {
+    font-size: 12px;
+    color: var(--muted);
+    padding-bottom: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .pressure-delta {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding-bottom: 8px;
+    margin-left: auto;
+  }
+
+  .delta-up { color: var(--pressure-high); }
+  .delta-down { color: var(--pressure-low); }
+  .delta-flat { color: var(--muted); }
+
+  .pressure-status {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .status-high { background: rgba(126,200,164,0.15); color: var(--pressure-high); }
+  .status-low { background: rgba(224,128,144,0.15); color: var(--pressure-low); }
+  .status-normal { background: rgba(108,140,218,0.12); color: var(--accent); }
+
+  /* Sparkline */
+  .sparkline-wrap {
+    position: relative;
+    height: 70px;
+  }
+
+  .sparkline-wrap svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .sparkline-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  .sparkline-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+  }
+
+  .now-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+  }
+
+  /* Condition hint */
+  .condition-card {
+    background: rgba(108,140,218,0.06);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .condition-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .condition-text {
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--muted);
+  }
+
+  .condition-text strong {
+    color: var(--glow);
+    font-weight: 400;
+  }
+
+  .location-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: rgba(136,146,176,0.5);
+    text-align: center;
+    padding: 4px;
+    letter-spacing: 0.08em;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .error-msg {
+    font-size: 11px;
+    color: var(--pressure-low);
+    text-align: center;
+    padding: 4px;
+  }
+
+  /* Stars */
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--d, 3s) ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="widget">
+  <div class="header">
+    <span class="title">星とからだのリズム帳</span>
+    <span class="today-date" id="todayDate"></span>
+  </div>
+
+  <div class="toggle-row">
+    <button class="toggle-btn active" id="btnDaily" onclick="setView('daily')">今日の月</button>
+    <button class="toggle-btn" id="btnWeekly" onclick="setView('weekly')">1週間の月</button>
+  </div>
+
+  <!-- Moon Card -->
+  <div class="moon-card" id="moonCard">
+    <div class="loading">月の情報を計算中...</div>
+  </div>
+
+  <!-- Pressure Card -->
+  <div class="pressure-card" id="pressureCard">
+    <div class="card-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      気　圧
+    </div>
+    <div class="loading">位置情報を取得中...</div>
+  </div>
+
+  <!-- Condition hint -->
+  <div class="condition-card" id="conditionCard" style="display:none">
+    <div class="condition-icon" id="condIcon">🌙</div>
+    <div class="condition-text" id="condText"></div>
+  </div>
+
+  <div class="location-note" id="locationNote"></div>
+</div>
+
+<script>
+// ─── Stars ─────────────────────────────────────────────────────────
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 55; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random() * 1.8 + 0.4;
+  s.style.cssText = `
+    width:${size}px; height:${size}px;
+    top:${Math.random()*100}%; left:${Math.random()*100}%;
+    --d:${Math.random()*4+2}s; --delay:${Math.random()*5}s;
+    opacity:${Math.random()*0.4+0.1};
+  `;
+  starsEl.appendChild(s);
+}
+
+// ─── Date Setup ────────────────────────────────────────────────────
+const now = new Date();
+const todayStr = now.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+document.getElementById('todayDate').textContent = todayStr;
+
+const DAYS_JP = ['日','月','火','水','木','金','土'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── Moon Phase Calculation ────────────────────────────────────────
+function getMoonPhase(date) {
+  // Known new moon: Jan 6, 2000 18:14 UTC
+  const knownNewMoon = new Date(Date.UTC(2000, 0, 6, 18, 14));
+  const synodicPeriod = 29.53058867; // days
+  const diff = (date - knownNewMoon) / (1000 * 60 * 60 * 24);
+  let phase = ((diff % synodicPeriod) + synodicPeriod) % synodicPeriod;
+  const fraction = phase / synodicPeriod; // 0–1
+  
+  // Illumination (cosine approximation)
+  const illumination = (1 - Math.cos(2 * Math.PI * fraction)) / 2;
+  
+  // Phase name
+  let nameJP, nameEN, emoji;
+  if (phase < 1.5) {
+    nameJP = '新月'; nameEN = 'New Moon'; emoji = '🌑';
+  } else if (phase < 6.5) {
+    nameJP = '三日月'; nameEN = 'Waxing Crescent'; emoji = '🌒';
+  } else if (phase < 8.5) {
+    nameJP = '上弦の月'; nameEN = 'First Quarter'; emoji = '🌓';
+  } else if (phase < 13.5) {
+    nameJP = '十三夜月'; nameEN = 'Waxing Gibbous'; emoji = '🌔';
+  } else if (phase < 15.5) {
+    nameJP = '満月'; nameEN = 'Full Moon'; emoji = '🌕';
+  } else if (phase < 21.5) {
+    nameJP = '十六夜'; nameEN = 'Waning Gibbous'; emoji = '🌖';
+  } else if (phase < 23.5) {
+    nameJP = '下弦の月'; nameEN = 'Last Quarter'; emoji = '🌗';
+  } else if (phase < 28.5) {
+    nameJP = '有明月'; nameEN = 'Waning Crescent'; emoji = '🌘';
+  } else {
+    nameJP = '新月'; nameEN = 'New Moon'; emoji = '🌑';
+  }
+
+  const isWaxing = phase < synodicPeriod / 2;
+  const daysToFull = isWaxing ? (synodicPeriod / 2 - phase) : (synodicPeriod - phase + synodicPeriod / 2);
+  const daysToNew = isWaxing ? (synodicPeriod - phase) : (synodicPeriod - phase);
+  const age = Math.floor(phase);
+
+  return { phase, fraction, illumination, nameJP, nameEN, emoji, isWaxing, age,
+           daysToFull: Math.round(daysToFull), daysToNew: Math.round(daysToNew) };
+}
+
+// ─── Draw Moon SVG ──────────────────────────────────────────────────
+function drawMoonSVG(illumination, isWaxing, size = 90) {
+  const r = size / 2;
+  const cx = r, cy = r;
+  
+  // The lit/dark shape using SVG path
+  // Phase angle
+  const angle = illumination * Math.PI;
+  const x = r * Math.cos(angle - Math.PI / 2); // horizontal extent of terminator
+
+  let path;
+  if (illumination < 0.02) {
+    // Very thin crescent or new — just draw circle with thin glow
+    path = `<circle cx="${cx}" cy="${cy}" r="${r - 2}" fill="rgba(240,232,204,0.08)" stroke="rgba(240,232,204,0.25)" stroke-width="1.5"/>`;
+  } else if (illumination > 0.98) {
+    path = `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="var(--moon)"/>`;
+  } else {
+    // Build the terminator
+    const ellipseX = Math.abs(r * Math.cos(Math.PI * illumination));
+    let svgPath;
+
+    if (isWaxing) {
+      if (illumination <= 0.5) {
+        // Waxing crescent: right half lit, terminator curves left
+        svgPath = `M ${cx} ${cy - r}
+                   A ${r} ${r} 0 0 1 ${cx} ${cy + r}
+                   A ${ellipseX} ${r} 0 0 0 ${cx} ${cy - r} Z`;
+      } else {
+        // Waxing gibbous: more than half lit
+        svgPath = `M ${cx} ${cy - r}
+                   A ${r} ${r} 0 0 1 ${cx} ${cy + r}
+                   A ${ellipseX} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+      }
+    } else {
+      if (illumination >= 0.5) {
+        // Waning gibbous: left half + more lit
+        svgPath = `M ${cx} ${cy - r}
+                   A ${r} ${r} 0 0 0 ${cx} ${cy + r}
+                   A ${ellipseX} ${r} 0 0 0 ${cx} ${cy - r} Z`;
+      } else {
+        // Waning crescent: left half lit
+        svgPath = `M ${cx} ${cy - r}
+                   A ${r} ${r} 0 0 0 ${cx} ${cy + r}
+                   A ${ellipseX} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+      }
+    }
+
+    path = `
+      <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="rgba(240,232,204,0.05)"/>
+      <path d="${svgPath}" fill="var(--moon)"/>
+      <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="none" stroke="rgba(240,232,204,0.3)" stroke-width="1"/>
+    `;
+  }
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="moon-svg-wrap">${path}</svg>`;
+}
+
+// ─── Small mini moon for week view ─────────────────────────────────
+function drawMiniMoon(illumination, isWaxing, size = 28) {
+  const r = size / 2;
+  const cx = r, cy = r;
+  const ellipseX = Math.abs(r * Math.cos(Math.PI * illumination));
+
+  let path;
+  if (illumination < 0.04) {
+    path = `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="rgba(240,232,204,0.08)" stroke="rgba(240,232,204,0.3)" stroke-width="1"/>`;
+  } else if (illumination > 0.96) {
+    path = `<circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="var(--moon)"/>`;
+  } else {
+    let svgPath;
+    if (isWaxing) {
+      svgPath = illumination <= 0.5
+        ? `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${ellipseX} ${r} 0 0 0 ${cx} ${cy - r} Z`
+        : `M ${cx} ${cy - r} A ${r} ${r} 0 0 1 ${cx} ${cy + r} A ${ellipseX} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+    } else {
+      svgPath = illumination >= 0.5
+        ? `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r} A ${ellipseX} ${r} 0 0 0 ${cx} ${cy - r} Z`
+        : `M ${cx} ${cy - r} A ${r} ${r} 0 0 0 ${cx} ${cy + r} A ${ellipseX} ${r} 0 0 1 ${cx} ${cy - r} Z`;
+    }
+    path = `
+      <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="rgba(240,232,204,0.05)"/>
+      <path d="${svgPath}" fill="var(--moon)"/>
+    `;
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${path}</svg>`;
+}
+
+// ─── Render Views ──────────────────────────────────────────────────
+function renderDailyMoon() {
+  const moon = getMoonPhase(now);
+  const illumPct = Math.round(moon.illumination * 100);
+  const daysLabel = moon.isWaxing
+    ? `満月まであと${moon.daysToFull}日`
+    : `新月まであと${moon.daysToNew}日`;
+
+  document.getElementById('moonCard').innerHTML = `
+    <div class="daily-moon">
+      ${drawMoonSVG(moon.illumination, moon.isWaxing, 90)}
+      <div class="moon-info">
+        <div class="moon-name-jp">${moon.nameJP}</div>
+        <div class="moon-name-en">${moon.nameEN}</div>
+        <div class="moon-stats">
+          <div class="moon-stat">
+            <span>月齢</span>
+            <span class="val">${moon.age}</span>
+          </div>
+          <div class="moon-stat">
+            <span>輝面比</span>
+            <span class="val">${illumPct}%</span>
+          </div>
+          <div class="illum-bar"><div class="illum-fill" style="width:${illumPct}%"></div></div>
+          <div class="moon-stat" style="margin-top:4px; font-size:11px;">
+            ${moon.isWaxing ? '↗ 満ちていく月' : '↘ 欠けていく月'}
+          </div>
+          <div class="moon-stat" style="font-size:11px; color: var(--accent);">
+            ${daysLabel}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  updateConditionCard();
+}
+
+function renderWeeklyMoon() {
+  const days = [];
+  for (let i = -1; i <= 5; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() + i);
+    const moon = getMoonPhase(d);
+    days.push({ date: d, moon });
+  }
+
+  const cells = days.map((d, i) => {
+    const isToday = i === 1;
+    const dayLabel = DAYS_JP[d.date.getDay()];
+    const dateNum = d.date.getDate();
+    const name = d.moon.nameJP;
+    const mini = drawMiniMoon(d.moon.illumination, d.moon.isWaxing, 30);
+    return `
+      <div class="week-day ${isToday ? 'today' : ''}">
+        <div class="week-day-label">${dayLabel}</div>
+        <div class="week-day-date">${dateNum}</div>
+        ${mini}
+        <div class="week-moon-name">${name}</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('moonCard').innerHTML = `
+    <div class="weekly-moon">
+      <div class="week-days">${cells}</div>
+    </div>
+  `;
+  updateConditionCard();
+}
+
+let currentView = 'daily';
+function setView(v) {
+  currentView = v;
+  document.getElementById('btnDaily').classList.toggle('active', v === 'daily');
+  document.getElementById('btnWeekly').classList.toggle('active', v === 'weekly');
+  if (v === 'daily') renderDailyMoon();
+  else renderWeeklyMoon();
+}
+
+// ─── Condition Card ─────────────────────────────────────────────────
+function updateConditionCard() {
+  const moon = getMoonPhase(now);
+  const card = document.getElementById('conditionCard');
+  const icon = document.getElementById('condIcon');
+  const text = document.getElementById('condText');
+
+  let msg = '';
+  let em = '🌙';
+
+  if (moon.nameJP === '満月') {
+    em = '🌕';
+    msg = '<strong>満月</strong>の夜は感情が高ぶりやすく、睡眠が浅くなりがちです。ゆったりとした入浴や読書でリラックスを。';
+  } else if (moon.nameJP === '新月') {
+    em = '🌑';
+    msg = '<strong>新月</strong>は気力が低下しやすい時期。新しいことを始めるより、休養と内省に向いています。';
+  } else if (moon.isWaxing) {
+    em = '🌒';
+    msg = '<strong>満ちていく月</strong>の時期は活動的になりやすく、気力が高まります。新しい挑戦に向いています。';
+  } else {
+    em = '🌘';
+    msg = '<strong>欠けていく月</strong>の時期は手放し・整理に適しています。無理せず体を整える時間を。';
+  }
+
+  icon.textContent = em;
+  text.innerHTML = msg;
+  card.style.display = 'flex';
+}
+
+// ─── Pressure ──────────────────────────────────────────────────────
+function renderPressure(data, lat, lon) {
+  const { hourly } = data;
+  const times = hourly.time;
+  const pressures = hourly.surface_pressure;
+
+  const nowISO = now.toISOString().slice(0, 13);
+  let nowIdx = times.findIndex(t => t.startsWith(nowISO));
+  if (nowIdx < 0) nowIdx = Math.floor(times.length / 2);
+
+  const current = pressures[nowIdx];
+  const past3h = pressures[Math.max(0, nowIdx - 3)];
+  const delta = current - past3h;
+
+  // Get 24h window for sparkline: 12h back to 12h forward
+  const startIdx = Math.max(0, nowIdx - 12);
+  const endIdx = Math.min(pressures.length - 1, nowIdx + 12);
+  const slice = pressures.slice(startIdx, endIdx + 1);
+  const sliceTimes = times.slice(startIdx, endIdx + 1);
+  const nowInSlice = nowIdx - startIdx;
+
+  const minP = Math.min(...slice);
+  const maxP = Math.max(...slice);
+  const range = Math.max(maxP - minP, 3);
+
+  // Sparkline SVG
+  const W = 400, H = 60;
+  const pts = slice.map((p, i) => {
+    const x = (i / (slice.length - 1)) * W;
+    const y = H - ((p - minP) / range) * (H - 8) - 4;
+    return [x, y];
+  });
+
+  const polyline = pts.map(([x, y]) => `${x},${y}`).join(' ');
+  const areaPath = `M ${pts[0][0]},${H} ${pts.map(([x,y]) => `L ${x},${y}`).join(' ')} L ${pts[pts.length-1][0]},${H} Z`;
+
+  const nowX = (nowInSlice / (slice.length - 1)) * W;
+  const nowY = pts[nowInSlice][1];
+
+  let statusClass, statusText;
+  if (current >= 1020) { statusClass = 'status-high'; statusText = '高気圧 — 晴れやか'; }
+  else if (current <= 1005) { statusClass = 'status-low'; statusText = '低気圧 — 天候悪化傾向'; }
+  else { statusClass = 'status-normal'; statusText = '標準気圧'; }
+
+  let deltaClass, deltaStr;
+  if (Math.abs(delta) < 0.5) { deltaClass = 'delta-flat'; deltaStr = '→ ±0'; }
+  else if (delta > 0) { deltaClass = 'delta-up'; deltaStr = `↑ +${delta.toFixed(1)}`; }
+  else { deltaClass = 'delta-down'; deltaStr = `↓ ${delta.toFixed(1)}`; }
+
+  // Condition tip
+  const condCard = document.getElementById('conditionCard');
+  const condText = document.getElementById('condText').innerHTML;
+  let pressureTip = '';
+  if (delta <= -3) pressureTip = '気圧が急激に下がっています。頭痛や倦怠感に注意を。';
+  else if (delta >= 3) pressureTip = '気圧が上昇中。天候が回復傾向で気分も上がりやすいかも。';
+
+  const labels = [0, 6, 12, 18, 24].map(h => {
+    const idx2 = Math.min(Math.max(0, nowInSlice - 12 + h), slice.length - 1);
+    const t = sliceTimes[idx2];
+    return t ? t.slice(11, 13) + ':00' : '';
+  });
+
+  document.getElementById('pressureCard').innerHTML = `
+    <div class="card-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2.5 2.5"/></svg>
+      気　圧
+      <span style="margin-left:auto; font-size:10px; color:var(--accent); letter-spacing:0.05em;">📍 横浜市</span>
+    </div>
+    <div class="pressure-main">
+      <div class="pressure-value">${Math.round(current)}</div>
+      <div class="pressure-unit">hPa</div>
+      <div class="pressure-delta ${deltaClass}">${deltaStr} <span style="font-size:9px;color:var(--muted)">/ 3h</span></div>
+    </div>
+    <div class="pressure-status ${statusClass}">${statusText}</div>
+    <div class="sparkline-wrap">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="${areaPath}" fill="url(#areaGrad)"/>
+        <polyline points="${polyline}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="${nowX}" y1="0" x2="${nowX}" y2="${H}" stroke="rgba(200,216,255,0.2)" stroke-width="1" stroke-dasharray="3,2"/>
+        <circle cx="${nowX}" cy="${nowY}" r="3.5" fill="var(--glow)" stroke="var(--accent)" stroke-width="1.5"/>
+        <text x="${nowX + 5}" y="${nowY - 5}" font-size="9" fill="var(--accent)" font-family="'DM Mono', monospace">NOW</text>
+      </svg>
+    </div>
+    <div class="sparkline-labels">
+      <span class="sparkline-label">−12h</span>
+      <span class="sparkline-label">−6h</span>
+      <span class="now-label">NOW</span>
+      <span class="sparkline-label">+6h</span>
+      <span class="sparkline-label">+12h</span>
+    </div>
+    ${pressureTip ? `<div style="margin-top:10px; font-size:11px; color:var(--pressure-low); line-height:1.6;">⚠ ${pressureTip}</div>` : ''}
+  `;
+
+  // Extend condition card with pressure tip
+  if (pressureTip) {
+    const ct = document.getElementById('condText');
+    ct.innerHTML += `<br><span style="color:var(--pressure-low);">⚠ ${pressureTip}</span>`;
+  }
+}
+
+// ─── Fetch pressure data ────────────────────────────────────────────
+function fetchPressure(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lon.toFixed(4)}&hourly=surface_pressure&forecast_days=2&past_days=1&timezone=auto`;
+  
+  fetch(url)
+    .then(r => r.json())
+    .then(data => {
+      renderPressure(data, lat, lon);
+    })
+    .catch(err => {
+      document.getElementById('pressureCard').innerHTML += `<div class="error-msg">気圧データを取得できませんでした。</div>`;
+    });
+}
+
+function initPressure() {
+  // 横浜市の座標で固定
+  fetchPressure(35.4437, 139.6380);
+}
+
+// ─── Init ───────────────────────────────────────────────────────────
+renderDailyMoon();
+initPressure();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
